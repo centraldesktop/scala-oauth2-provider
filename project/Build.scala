@@ -48,7 +48,9 @@ object ScalaOAuth2Build extends Build {
       libraryDependencies ++= Seq(
         "commons-codec" % "commons-codec" % "1.8",
         "com.nimbusds" % "oauth2-oidc-sdk" % "3.3",
-        "joda-time" % "joda-time" % "2.3"
+        "joda-time" % "joda-time" % "2.3",
+        "org.joda" % "joda-convert" % "1.3.1",
+        "javax.servlet" % "javax.servlet-api" % "3.0.1"
       ) ++ commonDependenciesInTestScope
     )
   )
