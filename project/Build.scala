@@ -46,7 +46,9 @@ object ScalaOAuth2Build extends Build {
       name := "scala-oauth2-core",
       description := "OAuth 2.0 server-side implementation written in Scala",
       libraryDependencies ++= Seq(
-        "commons-codec" % "commons-codec" % "1.8"
+        "commons-codec" % "commons-codec" % "1.8",
+        "com.nimbusds" % "oauth2-oidc-sdk" % "3.3",
+        "joda-time" % "joda-time" % "2.3"
       ) ++ commonDependenciesInTestScope
     )
   )
