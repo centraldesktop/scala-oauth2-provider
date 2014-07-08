@@ -7,7 +7,7 @@ import com.nimbusds.openid.connect.sdk.AuthenticationRequest
 import scalaoauth2.provider._
 import com.nimbusds.oauth2.sdk.{GeneralException, ParseException}
 import com.nimbusds.oauth2.sdk.http.HTTPResponse
-import play.api.libs.json.{JsString, Json, JsValue}
+import play.api.libs.json.{JsNumber, JsString, Json, JsValue}
 
 /**
  * OIDCProvider supports returning id_token for successful authentication
@@ -39,10 +39,16 @@ trait OIDCProvider extends OAuth2Provider {
     AuthenticationRequest.parse(queryString)
   }
 
-  override protected[scalaoidc] def responseAccessToken(r: GrantHandlerResult) = {
-    val tokenResponse = super.responseAccessToken(r)
-    tokenResponse ++ r.idToken.map {
-      "id_token" -> JsString(_)
+  protected[scalaoidc] def responseAccessToken(r: OIDCGrantHandlerResult) = {
+    Map[String, JsValue](
+      "token_type" -> JsString(r.tokenType),
+      "access_token" -> JsString(r.accessToken),
+      "id_token" -> JsString(r.idToken),
+      "scope" -> JsString(r.scope)
+    ) ++ r.expiresIn.map {
+      "expires_in" -> JsNumber(_)
+    } ++ r.refreshToken.map {
+      "refresh_token" -> JsString(_)
     }
   }
 

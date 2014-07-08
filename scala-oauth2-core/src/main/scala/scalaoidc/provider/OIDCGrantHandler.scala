@@ -12,7 +12,7 @@ import java.security.KeyPairGenerator
 import java.security.interfaces.RSAPrivateKey
 import com.nimbusds.oauth2.sdk.AuthorizationCode
 
-case class OIDCGrantHandlerResult(tokenType: String, accessToken: String, expiresIn: Option[Long], refreshToken: Option[String], scope: Option[String], idToken: String) extends GrantHandlerResult
+case class OIDCGrantHandlerResult(tokenType: String, accessToken: String, expiresIn: Option[Long], refreshToken: Option[String], scope: String, idToken: String) extends GrantHandlerResult
 
 trait OIDCGrantHandler {
   def handleRequest[U](request: AuthenticationRequest, dataHandler: DataHandler[U]): AuthenticationSuccessResponse
@@ -92,7 +92,7 @@ class OIDCAuthorizationCode(clientCredentialFetcher: ClientCredentialFetcher) ex
       result.accessToken,
       result.expiresIn,
       result.refreshToken,
-      result.scope,
+      result.scope.getOrElse(throw new InvalidGrant()),
       idToken
     )
   }
