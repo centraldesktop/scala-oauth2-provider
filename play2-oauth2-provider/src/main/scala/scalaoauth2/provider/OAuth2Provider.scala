@@ -67,6 +67,9 @@ trait OAuth2BaseProvider extends Results {
     params.mkString(", ")
   }
 
+  def tokenEndpoint: TokenEndpoint = {
+    TokenEndpoint
+  }
 }
 
 /**
@@ -111,7 +114,7 @@ trait OAuth2Provider extends OAuth2BaseProvider {
    *         Request is failed then return BadRequest or Unauthorized status to client with cause into the JSON.
    */
   def issueAccessToken[A, U](dataHandler: DataHandler[U])(implicit request: play.api.mvc.Request[A]): Result = {
-    TokenEndpoint.handleRequest(request, dataHandler) match {
+    tokenEndpoint.handleRequest(request, dataHandler) match {
       case Left(e) if e.statusCode == 400 => BadRequest(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
       case Left(e) if e.statusCode == 401 => Unauthorized(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
       case Right(r) => Ok(Json.toJson(responseAccessToken(r)))
@@ -182,7 +185,7 @@ trait OAuth2AsyncProvider extends OAuth2BaseProvider {
    *         Request is failed then return BadRequest or Unauthorized status to client with cause into the JSON.
    */
   def issueAccessToken[A, U](dataHandler: DataHandler[U])(implicit request: play.api.mvc.Request[A]): Future[Result] = {
-    TokenEndpoint.handleRequest(request, dataHandler) match {
+    tokenEndpoint.handleRequest(request, dataHandler) match {
       case Left(e) if e.statusCode == 400 => Future.successful(BadRequest(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e)))
       case Left(e) if e.statusCode == 401 => Future.successful(Unauthorized(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e)))
       case Right(r) => Future.successful(Ok(Json.toJson(responseAccessToken(r))))

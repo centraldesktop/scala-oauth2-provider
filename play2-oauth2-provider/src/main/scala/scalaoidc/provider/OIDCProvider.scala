@@ -3,24 +3,11 @@ package scalaoidc.provider
 import play.api.mvc._
 import scala.language.implicitConversions
 import scala.collection.JavaConversions._
-import com.nimbusds.openid.connect.sdk.{AuthenticationSuccessResponse, AuthenticationRequest}
+import com.nimbusds.openid.connect.sdk.AuthenticationRequest
 import scalaoauth2.provider._
-
-/**
- * Basic Open ID Connect provider trait.
- */
-trait OIDCBaseProvider extends OAuth2BaseProvider {
-
-  implicit def play2oidcRequest(request: RequestHeader): AuthenticationRequest = {
-    AuthenticationRequest.parse(request.rawQueryString)
-  }
-
-  implicit def play2oidcRequest[A](request: Request[A]): AuthenticationRequest = {
-    val param: Map[String, Seq[String]] = getParam(request)
-    val queryString = param.map { case (k,v) => k -> v.mkString }
-    AuthenticationRequest.parse(queryString)
-  }
-}
+import com.nimbusds.oauth2.sdk.{GeneralException, ParseException}
+import com.nimbusds.oauth2.sdk.http.HTTPResponse
+import play.api.libs.json.{JsString, Json, JsValue}
 
 /**
  * OIDCProvider supports returning id_token for successful authentication
@@ -29,17 +16,48 @@ trait OIDCBaseProvider extends OAuth2BaseProvider {
  * <code>
  * object OAuth2Controller extends Controller with OIDCProvider {
  *   def idToken = Action { implicit request =>
- *     issueIDToken(new MyDataHandler())
+ *     issueAccessToken(new MyDataHandler())
  *   }
  * }
  * </code>
  *
  * <h3>Register routes</h3>
  * <code>
- * GET /oauth2/authorize controllers.OAuth2Controller.idToken
+ * GET /oauth2/authorize controllers.OAuth2Controller.authorize
  * </code>
  */
-trait OIDCProvider extends OIDCBaseProvider {
+trait OIDCProvider extends OAuth2Provider {
+
+  def parseRequest(request: RequestHeader): AuthenticationRequest = {
+    AuthenticationRequest.parse(request.rawQueryString)
+  }
+
+  def parseRequest[A](request: Request[A]): AuthenticationRequest = {
+    val param: Map[String, Seq[String]] = getParam(request)
+    val queryString = param.map { case (k,v) => k -> v.mkString }
+
+    AuthenticationRequest.parse(queryString)
+  }
+
+  override protected[scalaoidc] def responseAccessToken(r: GrantHandlerResult) = {
+    val tokenResponse = super.responseAccessToken(r)
+    tokenResponse ++ r.idToken.map {
+      "id_token" -> JsString(_)
+    }
+  }
+
+  protected[scalaoidc] def responseOAuthErrorJson(e: GeneralException): JsValue = Json.obj(
+    "error" -> e.getErrorObject.getCode,
+    "error_description" -> e.getErrorObject.getDescription
+  )
+
+  protected[scalaoidc] def responseOAuthErrorHeader(e: GeneralException): (String, String) = ("WWW-Authenticate" -> ("Bearer " + toOAuthErrorString(e)))
+
+  protected def toOAuthErrorString(e: GeneralException): String = {
+    val params = Seq("error=\"" + e.getErrorObject.getCode + "\"") ++
+      (if (!e.getErrorObject.getDescription.isEmpty) { Seq("error_description=\"" + e.getErrorObject.getDescription + "\"") } else { Nil })
+    params.mkString(", ")
+  }
 
   /**
    * Issue access token in DataHandler process and return the response to client.
@@ -50,11 +68,31 @@ trait OIDCProvider extends OIDCBaseProvider {
    * @return Request is successful then return JSON to client in OAuth 2.0 format.
    *         Request is failed then return BadRequest or Unauthorized status to client with cause into the JSON.
    */
-  def issueIDToken[A, U](dataHandler: DataHandler[U])(implicit request: play.api.mvc.Request[A]): Result = {
-    AuthorizationEndpoint.handleRequest(request, dataHandler) match {
-      case Left(e) if e.statusCode == 400 => BadRequest(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
-      case Left(e) if e.statusCode == 401 => Unauthorized(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
-      case Right(r: AuthenticationSuccessResponse) => Found(r.getRedirectionURI.toString)
+  def issueAuthCode[A, U](dataHandler: DataHandler[U])(implicit request: play.api.mvc.Request[A]): Result = {
+    try {
+      val oidcRequest = parseRequest(request)
+      val response = OIDCAuthorizationEndpoint.handleRequest(oidcRequest, dataHandler)
+
+      Found(response.toURI.toString)
+    } catch {
+      case e: ParseException => {
+        e.getErrorObject.getHTTPStatusCode match {
+          case HTTPResponse.SC_BAD_REQUEST         => BadRequest(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
+          case HTTPResponse.SC_UNAUTHORIZED        => Unauthorized(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
+          case HTTPResponse.SC_FORBIDDEN           => Forbidden(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
+          case HTTPResponse.SC_SERVER_ERROR        => InternalServerError(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
+          case HTTPResponse.SC_SERVICE_UNAVAILABLE => ServiceUnavailable(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
+        }
+      }
+      case e: OAuthError => {
+        if (e.statusCode == 400) BadRequest(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
+        else if (e.statusCode == 401) Unauthorized(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
+        else ServiceUnavailable(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
+      }
     }
+  }
+
+  override def tokenEndpoint: TokenEndpoint = {
+    OIDCTokenEndpoint
   }
 }
