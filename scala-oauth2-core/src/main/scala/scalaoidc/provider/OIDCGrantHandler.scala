@@ -16,30 +16,8 @@ case class OIDCGrantHandlerResult(tokenType: String, accessToken: String, expire
 
 trait OIDCGrantHandler {
   def handleRequest[U](request: AuthenticationRequest, dataHandler: DataHandler[U]): AuthenticationSuccessResponse
-}
 
-class OIDCAuthCodeFlow extends OIDCGrantHandler {
-
-  override def handleRequest[U](request: AuthenticationRequest, dataHandler: DataHandler[U]): AuthenticationSuccessResponse = {
-
-    val clientId = request.getClientID
-    val scope = request.getScope
-    val redirectUri = request.getRedirectionURI
-    val user = dataHandler.findUser(request.toParameters.get("username"), request.toParameters.get("password")).getOrElse(throw new InvalidRequest())
-    val authInfo = AuthInfo(user, clientId.getValue, Some(scope.toString), Some(redirectUri.toString))
-    val authCode = dataHandler.getStoredAuthCode(authInfo) match {
-      case Some(code) => code
-      case None => dataHandler.createAuthCode(authInfo)
-    }
-
-    new AuthenticationSuccessResponse(request.getRedirectionURI, new AuthorizationCode(authCode.authorizationCode), null, null, request.getState)
-  }
-}
-
-class OIDCImplicitFlow extends OIDCGrantHandler {
-
-  override def handleRequest[U](request: AuthenticationRequest, dataHandler: DataHandler[U]): AuthenticationSuccessResponse = {
-
+  def getIDToken(request: AuthenticationRequest): SignedJWT = {
     val now = new DateTime
     val expiresIn = Period.hours(1)
     val idTokenClaimsSet = new IDTokenClaimsSet(
@@ -63,8 +41,32 @@ class OIDCImplicitFlow extends OIDCGrantHandler {
     val signer = new RSASSASigner(kp.getPrivate.asInstanceOf[RSAPrivateKey])
 
     signedJWT.sign(signer)
+    signedJWT
+  }
+}
 
-    new AuthenticationSuccessResponse(request.getRedirectionURI, null, signedJWT, null, request.getState)
+class OIDCAuthCodeFlow extends OIDCGrantHandler {
+
+  override def handleRequest[U](request: AuthenticationRequest, dataHandler: DataHandler[U]): AuthenticationSuccessResponse = {
+
+    val clientId = request.getClientID
+    val scope = request.getScope
+    val redirectUri = request.getRedirectionURI
+    val user = dataHandler.findUser(request.toParameters.get("username"), request.toParameters.get("password")).getOrElse(throw new InvalidRequest())
+    val authInfo = AuthInfo(user, clientId.getValue, Some(scope.toString), Some(redirectUri.toString))
+    val authCode = dataHandler.getStoredAuthCode(authInfo) match {
+      case Some(code) => code
+      case None => dataHandler.createAuthCode(authInfo, Some(getIDToken(request).serialize()))
+    }
+
+    new AuthenticationSuccessResponse(request.getRedirectionURI, new AuthorizationCode(authCode.authorizationCode), null, null, request.getState)
+  }
+}
+
+class OIDCImplicitFlow extends OIDCGrantHandler {
+
+  override def handleRequest[U](request: AuthenticationRequest, dataHandler: DataHandler[U]): AuthenticationSuccessResponse = {
+    new AuthenticationSuccessResponse(request.getRedirectionURI, null, getIDToken(request), null, request.getState)
   }
 }
 

@@ -132,7 +132,7 @@ trait DataHandler[U] {
    * @param authInfo This value is already authorized by system.
    * @return Auth code returned to client.
    */
-  def createAuthCode(authInfo: AuthInfo[U]): AuthCode
+  def createAuthCode(authInfo: AuthInfo[U], idToken: Option[String]): AuthCode
 
   /**
    * Returns stored auth code by authorized information.
