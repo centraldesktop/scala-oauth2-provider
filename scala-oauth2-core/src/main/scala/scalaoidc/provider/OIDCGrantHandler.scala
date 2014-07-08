@@ -87,11 +87,6 @@ class OIDCAuthorizationCode(clientCredentialFetcher: ClientCredentialFetcher) ex
 
     val authCode = dataHandler.getStoredAuthCode(authInfo).getOrElse(throw new InvalidGrant())
     val idToken = authCode.idToken.getOrElse(throw new InvalidGrant())
-    val authScope = authCode.scope.getOrElse(throw new InvalidScope())
-    val requestScope = request.scope.getOrElse(throw new InvalidScope())
-    if (authScope != requestScope) {
-      throw new InvalidScope
-    }
     val result = issueAccessToken(dataHandler, authInfo)
 
     OIDCGrantHandlerResult(
@@ -99,7 +94,7 @@ class OIDCAuthorizationCode(clientCredentialFetcher: ClientCredentialFetcher) ex
       result.accessToken,
       result.expiresIn,
       result.refreshToken,
-      Some(requestScope),
+      None,
       idToken
     )
   }
