@@ -43,9 +43,10 @@ trait OIDCProvider extends OAuth2Provider {
     Map[String, JsValue](
       "token_type" -> JsString(r.tokenType),
       "access_token" -> JsString(r.accessToken),
-      "id_token" -> JsString(r.idToken),
-      "scope" -> JsString(r.scope)
-    ) ++ r.expiresIn.map {
+      "id_token" -> JsString(r.idToken)
+    ) ++ r.scope.map {
+      "scope" -> JsString(_)
+    } ++ r.expiresIn.map {
       "expires_in" -> JsNumber(_)
     } ++ r.refreshToken.map {
       "refresh_token" -> JsString(_)
