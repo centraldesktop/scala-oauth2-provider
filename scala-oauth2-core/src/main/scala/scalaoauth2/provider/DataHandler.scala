@@ -23,9 +23,8 @@ case class AccessToken(token: String, refreshToken: Option[String], scope: Optio
  * @param createdAt Auth code created date.
  * @param scope Inform the client of the scope of the auth code issued.
  * @param expiresIn Expiration date of auth code. Unit is seconds.
- * @param idToken Inform client which user authenticated (OpenID Connect only)
  */
-case class AuthCode(authorizationCode: String, userId: Long, redirectUri: Option[String], createdAt: Date, scope: Option[String], clientId: String, expiresIn: Option[Long], idToken: Option[String])
+case class AuthCode(authorizationCode: String, userId: Long, redirectUri: Option[String], createdAt: Date, scope: Option[String], clientId: String, expiresIn: Option[Long])
 
 /**
  * Authorized information
@@ -132,7 +131,7 @@ trait DataHandler[U] {
    * @param authInfo This value is already authorized by system.
    * @return Auth code returned to client.
    */
-  def createAuthCode(authInfo: AuthInfo[U], idToken: Option[String]): AuthCode
+  def createAuthCode(authInfo: AuthInfo[U]): AuthCode
 
   /**
    * Returns stored auth code by authorized information.

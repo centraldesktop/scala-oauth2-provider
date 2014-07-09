@@ -39,16 +39,18 @@ trait OIDCProvider extends OAuth2Provider {
     AuthenticationRequest.parse(queryString)
   }
 
-  protected[scalaoidc] def responseAccessToken(r: OIDCGrantHandlerResult) = {
+  override protected def responseAccessToken(r: GrantHandlerResult) = {
+    val result = r.asInstanceOf[OIDCGrantHandlerResult]
+
     Map[String, JsValue](
-      "token_type" -> JsString(r.tokenType),
-      "access_token" -> JsString(r.accessToken),
-      "id_token" -> JsString(r.idToken)
-    ) ++ r.scope.map {
+      "token_type" -> JsString(result.tokenType),
+      "access_token" -> JsString(result.accessToken),
+      "id_token" -> JsString(result.idToken)
+    ) ++ result.scope.map {
       "scope" -> JsString(_)
-    } ++ r.expiresIn.map {
+    } ++ result.expiresIn.map {
       "expires_in" -> JsNumber(_)
-    } ++ r.refreshToken.map {
+    } ++ result.refreshToken.map {
       "refresh_token" -> JsString(_)
     }
   }
