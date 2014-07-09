@@ -77,7 +77,7 @@ trait OIDCProvider extends OAuth2Provider {
    * @return Request is successful then return JSON to client in OAuth 2.0 format.
    *         Request is failed then return BadRequest or Unauthorized status to client with cause into the JSON.
    */
-  def issueAuthCode[A, U](dataHandler: DataHandler[U])(implicit request: play.api.mvc.Request[A]): Result = {
+  def issueAuthCode[A, U](dataHandler: OIDCDataHandler[U])(implicit request: play.api.mvc.Request[A]): Result = {
     try {
       val oidcRequest = parseRequest(request)
       val response = OIDCAuthorizationEndpoint.handleRequest(oidcRequest, dataHandler)

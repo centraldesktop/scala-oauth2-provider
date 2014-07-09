@@ -16,17 +16,6 @@ case class AccessTokenRequest[U](clientId: String, clientSecret: String, user: U
 case class AccessToken(token: String, refreshToken: Option[String], scope: Option[String], expiresIn: Option[Long], createdAt: Date)
 
 /**
- * Auth code
- *
- * @param authorizationCode Auth code used to issue access token
- * @param redirectUri call back url to client
- * @param createdAt Auth code created date.
- * @param scope Inform the client of the scope of the auth code issued.
- * @param expiresIn Expiration date of auth code. Unit is seconds.
- */
-case class AuthCode(authorizationCode: String, userId: Long, redirectUri: Option[String], createdAt: Date, scope: Option[String], clientId: String, expiresIn: Option[Long])
-
-/**
  * Authorized information
  *
  * @param user Authorized user which is registered on system.
@@ -124,24 +113,6 @@ trait DataHandler[U] {
    * @return Access token returns to client.
    */
   def getStoredAccessToken(authInfo: AuthInfo[U]): Option[AccessToken]
-
-  /**
-   * Creates a new access token by authorized information.
-   *
-   * @param authInfo This value is already authorized by system.
-   * @return Auth code returned to client.
-   */
-  def createAuthCode(authInfo: AuthInfo[U]): AuthCode
-
-  /**
-   * Returns stored auth code by authorized information.
-   *
-   * If want to create new auth code then have to return None
-   *
-   * @param authInfo This value is already authorized by system.
-   * @return Auth code returned to client.
-   */
-  def getStoredAuthCode(authInfo: AuthInfo[U]): Option[AuthCode]
 
   /**
    * Creates a new access token by refreshToken.
