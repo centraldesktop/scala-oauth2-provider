@@ -56,7 +56,7 @@ class OIDCTokenRequest(clientCredentialFetcher: ClientCredentialFetcher) extends
       throw new RedirectUriMismatch
     }
 
-    issueAccessToken(dataHandler, authInfo)
+    issueAccessTokenWithIDToken(dataHandler, authInfo)
   }
 
   /**
@@ -66,24 +66,22 @@ class OIDCTokenRequest(clientCredentialFetcher: ClientCredentialFetcher) extends
    * @param authInfo
    * @return
    */
-  def issueAccessToken[U](dataHandler: OIDCDataHandler[U], authInfo: AuthInfo[U]): GrantHandlerResult = {
-    val accessToken = dataHandler.getStoredAccessToken(authInfo) match {
-      case Some(token) if dataHandler.isAccessTokenExpired(token) =>
-        token.refreshToken.map(dataHandler.refreshAccessToken(authInfo, _)).getOrElse(dataHandler.createAccessToken(authInfo))
-      case Some(token) => token
-      case None => dataHandler.createAccessToken(authInfo)
+  def issueAccessTokenWithIDToken[U, H >: OIDCDataHandler[U] <: DataHandler[U]](dataHandler: H, authInfo: AuthInfo[U]): GrantHandlerResult = {
+    val result = issueAccessToken(dataHandler, authInfo)
+    dataHandler match {
+      case handler: OIDCDataHandler[U] => {
+        val idToken = handler.createIDToken(authInfo, Some(result.accessToken))
+        OIDCGrantHandlerResult(
+          result.tokenType,
+          result.accessToken,
+          result.expiresIn,
+          result.refreshToken,
+          None,
+          idToken.serialize
+        )
+      }
+      case _ => result
     }
-
-    val idToken = dataHandler.createIDToken(authInfo, Some(accessToken))
-
-    OIDCGrantHandlerResult(
-      "Bearer",
-      accessToken.token,
-      accessToken.expiresIn,
-      accessToken.refreshToken,
-      None,
-      idToken.serialize
-    )
   }
 
 }

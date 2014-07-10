@@ -1,6 +1,5 @@
 package scalaoidc.provider
 
-import scalaoauth2.provider._
 import com.nimbusds.openid.connect.sdk.{AuthenticationSuccessResponse, AuthenticationRequest}
 import com.nimbusds.oauth2.sdk.{OAuth2Error, ParseException}
 

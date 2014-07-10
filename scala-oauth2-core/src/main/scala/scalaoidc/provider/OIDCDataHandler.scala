@@ -21,7 +21,7 @@ import com.nimbusds.oauth2.sdk.token.BearerAccessToken
  * @param scope Inform the client of the scope of the auth code issued.
  * @param expiresIn Expiration date of auth code. Unit is seconds.
  */
-case class AuthCode(authorizationCode: String, userId: Long, redirectUri: Option[String], createdAt: Date, scope: Option[String], clientId: String, expiresIn: Option[Long])
+case class AuthCode(authorizationCode: String, userId: String, redirectUri: Option[String], createdAt: Date, scope: Option[String], clientId: String, expiresIn: Option[Long])
 
 trait OIDCDataHandler[U] extends DataHandler[U] {
 
@@ -65,7 +65,7 @@ trait OIDCDataHandler[U] extends DataHandler[U] {
    * @param accessToken Option access token when using Authorization Code Flow
    * @return Signed JWT returned to client.
    */
-  def createIDToken(authInfo: AuthInfo[U], accessToken: Option[AccessToken]): SignedJWT = {
+  def createIDToken(authInfo: AuthInfo[U], accessToken: Option[String]): SignedJWT = {
     val now = new DateTime
     val expiresIn = Period.hours(1)
     val idTokenClaimsSet = new IDTokenClaimsSet(
@@ -76,7 +76,7 @@ trait OIDCDataHandler[U] extends DataHandler[U] {
       now.plus(expiresIn).toDate
     )
     accessToken match {
-      case Some(token) => idTokenClaimsSet.setAccessTokenHash(AccessTokenHash.compute(new BearerAccessToken(token.token), JWSAlgorithm.RS256))
+      case Some(token) => idTokenClaimsSet.setAccessTokenHash(AccessTokenHash.compute(new BearerAccessToken(token), JWSAlgorithm.RS256))
       case None => // Nop
     }
 
