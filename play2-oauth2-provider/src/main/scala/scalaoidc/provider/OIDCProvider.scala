@@ -85,18 +85,10 @@ trait OIDCProvider extends OAuth2Provider {
       Found(response.toURI.toString)
     } catch {
       case e: ParseException => {
-        e.getErrorObject.getHTTPStatusCode match {
-          case HTTPResponse.SC_BAD_REQUEST         => BadRequest(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
-          case HTTPResponse.SC_UNAUTHORIZED        => Unauthorized(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
-          case HTTPResponse.SC_FORBIDDEN           => Forbidden(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
-          case HTTPResponse.SC_SERVER_ERROR        => InternalServerError(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
-          case HTTPResponse.SC_SERVICE_UNAVAILABLE => ServiceUnavailable(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
-        }
+        Status(e.getErrorObject.getHTTPStatusCode)(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
       }
       case e: OAuthError => {
-        if (e.statusCode == 400) BadRequest(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
-        else if (e.statusCode == 401) Unauthorized(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
-        else ServiceUnavailable(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
+        Status(e.statusCode)(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
       }
     }
   }
