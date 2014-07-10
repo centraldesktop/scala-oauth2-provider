@@ -10,7 +10,7 @@ class OIDCAuthorizationEndpoint {
     "id_token" -> new OIDCImplicitFlow
   )
 
-  def handleRequest[U](request: AuthenticationRequest, dataHandler: OIDCDataHandler[U]): AuthenticationSuccessResponse = {
+  def handleRequest[U](request: AuthenticationRequest, dataHandler: OIDCDataHandler[U], user: U): AuthenticationSuccessResponse = {
     val responseType = request.getResponseType
     val handler = handlers.get(responseType.toString).getOrElse(
       throw new ParseException("the response_type isn't supported",
@@ -18,7 +18,7 @@ class OIDCAuthorizationEndpoint {
         request.getClientID, request.getRedirectionURI, request.getState)
     )
 
-    handler.handleRequest(request, dataHandler)
+    handler.handleRequest(request, dataHandler, user)
   }
 }
 

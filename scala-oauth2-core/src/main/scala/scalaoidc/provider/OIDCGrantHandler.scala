@@ -7,17 +7,16 @@ import com.nimbusds.oauth2.sdk.AuthorizationCode
 case class OIDCGrantHandlerResult(tokenType: String, accessToken: String, expiresIn: Option[Long], refreshToken: Option[String], scope: Option[String], idToken: String) extends GrantHandlerResult
 
 trait OIDCGrantHandler {
-  def handleRequest[U](request: AuthenticationRequest, dataHandler: OIDCDataHandler[U]): AuthenticationSuccessResponse
+  def handleRequest[U](request: AuthenticationRequest, dataHandler: OIDCDataHandler[U], user: U): AuthenticationSuccessResponse
 }
 
 class OIDCAuthCodeFlow extends OIDCGrantHandler {
 
-  override def handleRequest[U](request: AuthenticationRequest, dataHandler: OIDCDataHandler[U]): AuthenticationSuccessResponse = {
+  override def handleRequest[U](request: AuthenticationRequest, dataHandler: OIDCDataHandler[U], user: U): AuthenticationSuccessResponse = {
 
     val clientId = request.getClientID
     val scope = request.getScope
     val redirectUri = request.getRedirectionURI
-    val user = dataHandler.findUser(request.toParameters.get("username"), request.toParameters.get("password")).getOrElse(throw new InvalidRequest())
     val authInfo = AuthInfo(user, clientId.getValue, Some(scope.toString), Some(redirectUri.toString))
     val authCode = dataHandler.getStoredAuthCode(authInfo) match {
       case Some(code) => code
@@ -30,11 +29,10 @@ class OIDCAuthCodeFlow extends OIDCGrantHandler {
 
 class OIDCImplicitFlow extends OIDCGrantHandler {
 
-  override def handleRequest[U](request: AuthenticationRequest, dataHandler: OIDCDataHandler[U]): AuthenticationSuccessResponse = {
+  override def handleRequest[U](request: AuthenticationRequest, dataHandler: OIDCDataHandler[U], user: U): AuthenticationSuccessResponse = {
     val clientId = request.getClientID
     val scope = request.getScope
     val redirectUri = request.getRedirectionURI
-    val user = dataHandler.findUser(request.toParameters.get("username"), request.toParameters.get("password")).getOrElse(throw new InvalidRequest())
     val authInfo = AuthInfo(user, clientId.getValue, Some(scope.toString), Some(redirectUri.toString))
 
     new AuthenticationSuccessResponse(request.getRedirectionURI, null, dataHandler.createIDToken(authInfo, None), null, request.getState)
