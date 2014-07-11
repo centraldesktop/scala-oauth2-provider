@@ -1,6 +1,6 @@
 package scalaoidc.provider
 
-import scalaoauth2.provider.{AccessToken, AuthInfo, DataHandler}
+import scalaoauth2.provider.{AuthInfo, DataHandler}
 import com.nimbusds.jwt.SignedJWT
 import java.util.Date
 import com.nimbusds.jose.{JWSAlgorithm, JWSHeader}
