@@ -6,8 +6,9 @@ import scala.collection.JavaConversions._
 import com.nimbusds.openid.connect.sdk.AuthenticationRequest
 import scalaoauth2.provider._
 import com.nimbusds.oauth2.sdk.{GeneralException, ParseException}
-import com.nimbusds.oauth2.sdk.http.HTTPResponse
 import play.api.libs.json.{JsNumber, JsString, Json, JsValue}
+import scalaoauth2.token.OAuth2AccessTokenResponse
+import scalaoidc.token.OIDCIDToken
 
 /**
  * OIDCProvider supports returning id_token for successful authentication
@@ -40,18 +41,11 @@ trait OIDCProvider extends OAuth2Provider {
   }
 
   override protected def responseAccessToken(r: GrantHandlerResult) = {
-    val result = r.asInstanceOf[OIDCGrantHandlerResult]
-
-    Map[String, JsValue](
-      "token_type" -> JsString(result.tokenType),
-      "access_token" -> JsString(result.accessToken),
-      "id_token" -> JsString(result.idToken)
-    ) ++ result.scope.map {
-      "scope" -> JsString(_)
-    } ++ result.expiresIn.map {
-      "expires_in" -> JsNumber(_)
-    } ++ result.refreshToken.map {
-      "refresh_token" -> JsString(_)
+    r match {
+      case OAuth2GrantHandlerResult(_,_,_,_,_) => (new OAuth2AccessTokenResponse).build(r)
+      case OIDCGrantHandlerResult(_,_,_,_,_,_) =>
+        new OAuth2AccessTokenResponse[OIDCGrantHandlerResult] with OIDCIDToken[OIDCGrantHandlerResult]
+          .build(r.asInstanceOf[OIDCGrantHandlerResult])
     }
   }
 

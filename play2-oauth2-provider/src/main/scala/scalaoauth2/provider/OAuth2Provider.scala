@@ -3,6 +3,7 @@ package scalaoauth2.provider
 import play.api.mvc._
 import play.api.libs.json._
 import scala.language.implicitConversions
+import scalaoauth2.token.OAuth2AccessTokenResponse
 
 /**
  * Basic OAuth2 provider trait.
@@ -42,16 +43,7 @@ trait OAuth2BaseProvider extends Results {
   }
 
   protected def responseAccessToken(r: GrantHandlerResult) = {
-    Map[String, JsValue](
-      "token_type" -> JsString(r.tokenType),
-      "access_token" -> JsString(r.accessToken)
-    ) ++ r.expiresIn.map {
-      "expires_in" -> JsNumber(_)
-    } ++ r.refreshToken.map {
-      "refresh_token" -> JsString(_)
-    } ++ r.scope.map {
-      "scope" -> JsString(_)
-    }
+    (new OAuth2AccessTokenResponse).build(r)
   }
 
   protected[scalaoauth2] def responseOAuthErrorJson(e: OAuthError): JsValue = Json.obj(
