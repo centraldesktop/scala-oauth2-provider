@@ -12,7 +12,7 @@ class OIDCAuthorizationEndpoint {
 
   def handleRequest[U](request: AuthenticationRequest, dataHandler: OIDCDataHandler[U], user: U): AuthenticationSuccessResponse = {
     val responseType = request.getResponseType
-    val handler = handlers.get(responseType.toString).getOrElse(
+    val handler = handlers.getOrElse(responseType.toString,
       throw new ParseException("the response_type isn't supported",
         OAuth2Error.UNSUPPORTED_RESPONSE_TYPE,
         request.getClientID, request.getRedirectionURI, request.getState)
