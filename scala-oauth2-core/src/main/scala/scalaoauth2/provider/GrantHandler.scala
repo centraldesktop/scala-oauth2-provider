@@ -1,7 +1,14 @@
 package scalaoauth2.provider
 
+abstract class GrantHandlerResult {
+  def tokenType: String
+  def accessToken: String
+  def expiresIn: Option[Long]
+  def refreshToken: Option[String]
+  def scope: Option[String]
+}
 
-case class GrantHandlerResult(tokenType: String, accessToken: String, expiresIn: Option[Long], refreshToken: Option[String], scope: Option[String])
+case class OAuth2GrantHandlerResult(tokenType: String, accessToken: String, expiresIn: Option[Long], refreshToken: Option[String], scope: Option[String]) extends GrantHandlerResult
 
 trait GrantHandler {
 
@@ -22,8 +29,8 @@ trait GrantHandler {
       case Some(token) => token
       case None => dataHandler.createAccessToken(authInfo)
     }
-    
-    GrantHandlerResult(
+
+    OAuth2GrantHandlerResult(
       "Bearer",
       accessToken.token,
       accessToken.expiresIn,
@@ -44,7 +51,7 @@ class RefreshToken(clientCredentialFetcher: ClientCredentialFetcher) extends Gra
     }
     
     val accessToken = dataHandler.refreshAccessToken(authInfo, refreshToken)
-    GrantHandlerResult(
+    OAuth2GrantHandlerResult(
       "Bearer",
       accessToken.token,
       accessToken.expiresIn,

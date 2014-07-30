@@ -3,6 +3,7 @@ package scalaoauth2.provider
 import play.api.mvc._
 import play.api.libs.json._
 import scala.language.implicitConversions
+import scalaoauth2.token.OAuth2AccessTokenResponse
 
 /**
  * Basic OAuth2 provider trait.
@@ -41,17 +42,8 @@ trait OAuth2BaseProvider extends Results {
     }
   }
 
-  protected[scalaoauth2] def responseAccessToken(r: GrantHandlerResult) = {
-    Map[String, JsValue](
-      "token_type" -> JsString(r.tokenType),
-      "access_token" -> JsString(r.accessToken)
-    ) ++ r.expiresIn.map {
-      "expires_in" -> JsNumber(_)
-    } ++ r.refreshToken.map {
-      "refresh_token" -> JsString(_)
-    } ++ r.scope.map {
-      "scope" -> JsString(_)
-    }
+  protected def responseAccessToken(r: GrantHandlerResult) = {
+    (new OAuth2AccessTokenResponse).build(r)
   }
 
   protected[scalaoauth2] def responseOAuthErrorJson(e: OAuthError): JsValue = Json.obj(
@@ -67,6 +59,9 @@ trait OAuth2BaseProvider extends Results {
     params.mkString(", ")
   }
 
+  def tokenEndpoint: TokenEndpoint = {
+    TokenEndpoint
+  }
 }
 
 /**
@@ -111,7 +106,7 @@ trait OAuth2Provider extends OAuth2BaseProvider {
    *         Request is failed then return BadRequest or Unauthorized status to client with cause into the JSON.
    */
   def issueAccessToken[A, U](dataHandler: DataHandler[U])(implicit request: play.api.mvc.Request[A]): Result = {
-    TokenEndpoint.handleRequest(request, dataHandler) match {
+    tokenEndpoint.handleRequest(request, dataHandler) match {
       case Left(e) if e.statusCode == 400 => BadRequest(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
       case Left(e) if e.statusCode == 401 => Unauthorized(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
       case Right(r) => Ok(Json.toJson(responseAccessToken(r))).withHeaders("Cache-Control" -> "no-store", "Pragma" -> "no-cache")
@@ -182,7 +177,7 @@ trait OAuth2AsyncProvider extends OAuth2BaseProvider {
    *         Request is failed then return BadRequest or Unauthorized status to client with cause into the JSON.
    */
   def issueAccessToken[A, U](dataHandler: DataHandler[U])(implicit request: play.api.mvc.Request[A]): Future[Result] = {
-    TokenEndpoint.handleRequest(request, dataHandler) match {
+    tokenEndpoint.handleRequest(request, dataHandler) match {
       case Left(e) if e.statusCode == 400 => Future.successful(BadRequest(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e)))
       case Left(e) if e.statusCode == 401 => Future.successful(Unauthorized(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e)))
       case Right(r) => Future.successful(Ok(Json.toJson(responseAccessToken(r))).withHeaders("Cache-Control" -> "no-store", "Pragma" -> "no-cache"))

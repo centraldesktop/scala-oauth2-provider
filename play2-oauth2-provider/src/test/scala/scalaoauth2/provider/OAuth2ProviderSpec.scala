@@ -2,7 +2,6 @@ package scalaoauth2.provider
 
 import org.scalatest._
 import org.scalatest.Matchers._
-import scala.concurrent.Future
 import play.api.libs.json._
 
 class OAuth2ProviderSpec extends FlatSpec {
@@ -12,7 +11,7 @@ class OAuth2ProviderSpec extends FlatSpec {
   }
 
   it should "return including access token" in {
-    val map = TestOAuthProvider.responseAccessToken(GrantHandlerResult(tokenType = "Bearer", accessToken = "access_token", expiresIn = Some(3600), refreshToken = None, scope = None))
+    val map = TestOAuthProvider.responseAccessToken(OAuth2GrantHandlerResult(tokenType = "Bearer", accessToken = "access_token", expiresIn = Some(3600), refreshToken = None, scope = None))
     map.get("token_type") should contain (JsString("Bearer"))
     map.get("access_token") should contain (JsString("access_token"))
     map.get("expires_in") should contain (JsNumber(3600))
@@ -31,5 +30,9 @@ class OAuth2ProviderSpec extends FlatSpec {
     val (name, value) = TestOAuthProvider.responseOAuthErrorHeader(new InvalidRequest("request is invalid"))
     name should be ("WWW-Authenticate")
     value should be ("""Bearer error="invalid_request", error_description="request is invalid"""")
+  }
+
+  it should "return correct token endpoint" in {
+    TestOAuthProvider.tokenEndpoint shouldBe a [TokenEndpoint]
   }
 }

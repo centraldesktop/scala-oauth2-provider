@@ -4,7 +4,7 @@ class TokenEndpoint {
 
   val fetcher = ClientCredentialFetcher
 
-  val handlers = Map(
+  def handlers = Map(
     "authorization_code" -> new AuthorizationCode(fetcher),
     "refresh_token" -> new RefreshToken(fetcher),
     "client_credentials" -> new ClientCredentials(fetcher),
