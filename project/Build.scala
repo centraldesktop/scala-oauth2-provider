@@ -24,7 +24,7 @@ object ScalaOAuth2Build extends Build {
     crossScalaVersions := _crossScalaVersions,
     scalacOptions ++= _scalacOptions,
     publishTo <<= version { (v: String) => _publishTo(v) },
-    publishMavenStyle := true,
+    credentials := _credentials,
     publishArtifact in Test := false,
     pomIncludeRepository := { x => false }
   )
@@ -72,6 +72,8 @@ object ScalaOAuth2Build extends Build {
     if (v.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus + "snapshots")
     else Some("releases" at nexus + "releases")
   }
+
+  val _credentials = Seq(Credentials("Sonatype Nexus Repository Manager", "is-macmini1.cdlocal", "admin", "admin123"))
 
   val _scalacOptions = Seq("-deprecation", "-unchecked", "-feature")
 }
