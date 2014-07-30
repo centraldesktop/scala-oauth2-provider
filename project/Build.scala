@@ -10,8 +10,7 @@ object ScalaOAuth2Build extends Build {
     case _ => "2.2.3"
   }
 
-  val _scalaVersion = "2.10.3"
-  val _crossScalaVersions = Seq("2.10.3", "2.11.1")
+  val _scalaVersion = "2.11.1"
 
   val commonDependenciesInTestScope = Seq(
     "org.scalatest" %% "scalatest" % "2.2.0" % "test"
@@ -21,7 +20,6 @@ object ScalaOAuth2Build extends Build {
     organization := _organization,
     version := _version,
     scalaVersion := _scalaVersion,
-    crossScalaVersions := _crossScalaVersions,
     scalacOptions ++= _scalacOptions,
     publishTo <<= version { (v: String) => _publishTo(v) },
     publishMavenStyle := true,
