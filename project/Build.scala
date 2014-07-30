@@ -3,13 +3,14 @@ import Keys._
 
 object ScalaOAuth2Build extends Build {
 
-  lazy val _organization = "com.nulab-inc"
-  lazy val _version =  "0.8.0"
+  lazy val _organization = "kairos"
+  lazy val _version =  "0.8.0-SNAPSHOT"
   def _playVersion(version: String) = version match {
     case "2.11.1" => "2.3.0"
     case _ => "2.2.3"
   }
 
+  val _crossScalaVersions = Seq("2.10.3", "2.11.1")
   val _scalaVersion = "2.11.1"
 
   val commonDependenciesInTestScope = Seq(
@@ -20,12 +21,12 @@ object ScalaOAuth2Build extends Build {
     organization := _organization,
     version := _version,
     scalaVersion := _scalaVersion,
+    crossScalaVersions := _crossScalaVersions,
     scalacOptions ++= _scalacOptions,
     publishTo <<= version { (v: String) => _publishTo(v) },
     publishMavenStyle := true,
     publishArtifact in Test := false,
-    pomIncludeRepository := { x => false },
-    pomExtra := _pomExtra
+    pomIncludeRepository := { x => false }
   )
 
   lazy val root = Project(
@@ -67,30 +68,11 @@ object ScalaOAuth2Build extends Build {
   ) dependsOn(scalaOAuth2Core)
 
   def _publishTo(v: String) = {
-    val nexus = "https://oss.sonatype.org/"
-    if (v.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus + "content/repositories/snapshots")
-    else Some("releases" at nexus + "service/local/staging/deploy/maven2")
+    val nexus = "http://is-macmini1.cdlocal:8081/nexus/content/repositories/"
+    if (v.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus + "snapshots")
+    else Some("releases" at nexus + "releases")
   }
 
   val _scalacOptions = Seq("-deprecation", "-unchecked", "-feature")
-  val _pomExtra = <url>https://github.com/nulab/scala-oauth2-provider</url>
-      <licenses>
-        <license>
-          <name>MIT License</name>
-          <url>http://www.opensource.org/licenses/mit-license.php</url>
-          <distribution>repo</distribution>
-        </license>
-      </licenses>
-      <scm>
-        <url>https://github.com/nulab/scala-oauth2-provider</url>
-        <connection>scm:git:git@github.com:nulab/scala-oauth2-provider.git</connection>
-      </scm>
-      <developers>
-        <developer>
-          <id>tsuyoshizawa</id>
-          <name>Tsuyoshi Yoshizawa</name>
-          <url>https://github.com/tsuyoshizawa</url>
-        </developer>
-      </developers>
 }
 
