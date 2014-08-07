@@ -44,6 +44,13 @@ trait OIDCDataHandler[U] extends DataHandler[U] {
   def getStoredAuthCode(authInfo: AuthInfo[U]): Option[AuthCode]
 
   /**
+   * Deletes stored auth code for authorized information.
+   *
+   * @param authInfo This value is already authorized by system.
+   */
+  def deleteStoredAuthCodes(authInfo: AuthInfo[U])
+
+  /**
    * A locally unique and never reassigned identifier within the Issuer for the End-User, which is intended to be consumed by the Client, e.g.,
    * 24400320 or AItOawmwtWwcT0k51BayewNvutrJUqsvl6qs7A4. It MUST NOT exceed 255 ASCII characters in length. The sub value is a case sensitive string.
    *

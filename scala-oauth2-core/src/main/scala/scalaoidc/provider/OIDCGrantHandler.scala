@@ -68,6 +68,7 @@ class OIDCTokenRequest(clientCredentialFetcher: ClientCredentialFetcher) extends
     val result = issueAccessToken(dataHandler, authInfo)
     dataHandler match {
       case handler: OIDCDataHandler[U] => {
+        handler.deleteStoredAuthCodes(authInfo)
         val idToken = handler.createIDToken(authInfo, Some(result.accessToken))
         OIDCGrantHandlerResult(
           result.tokenType,
