@@ -4,7 +4,7 @@ import Keys._
 object ScalaOAuth2Build extends Build {
 
   lazy val _organization = "kairos"
-  lazy val _version =  "0.8.0-SNAPSHOT"
+  lazy val _version =  "0.8.1-SNAPSHOT"
   lazy val _playVersion = "2.3.2"
 
   val _crossScalaVersions = Seq("2.10.3", "2.11.1")
