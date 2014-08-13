@@ -79,8 +79,8 @@ trait OIDCDataHandler[U] extends DataHandler[U] {
       new Issuer(getIssuerIdentifier),
       new Subject(getSubjectIdentifier(authInfo)),
       new Audience(authInfo.clientId).toSingleAudienceList,
-      now.toDate,
-      now.plus(expiresIn).toDate
+      now.plus(expiresIn).toDate,
+      now.toDate
     )
     accessToken match {
       case Some(token) => idTokenClaimsSet.setAccessTokenHash(AccessTokenHash.compute(new BearerAccessToken(token), JWSAlgorithm.RS256))
