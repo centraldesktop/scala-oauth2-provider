@@ -4,11 +4,11 @@ import Keys._
 object ScalaOAuth2Build extends Build {
 
   lazy val _organization = "kairos"
-  lazy val _version =  "0.8.2-SNAPSHOT"
+  lazy val _version =  "0.9.0-SNAPSHOT"
   lazy val _playVersion = "2.3.2"
 
-  val _crossScalaVersions = Seq("2.10.3", "2.11.1")
-  val _scalaVersion = "2.11.1"
+  val _crossScalaVersions = Seq("2.10.3", "2.11.2")
+  val _scalaVersion = "2.11.2"
 
   val commonDependenciesInTestScope = Seq(
     "org.scalatest" %% "scalatest" % "2.2.0" % "test"
