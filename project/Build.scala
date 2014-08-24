@@ -5,7 +5,7 @@ object ScalaOAuth2Build extends Build {
 
   lazy val _organization = "kairos"
   lazy val _version =  "0.9.0-SNAPSHOT"
-  lazy val _playVersion = "2.3.2"
+  lazy val _playVersion = "2.3.3"
 
   val _crossScalaVersions = Seq("2.10.3", "2.11.2")
   val _scalaVersion = "2.11.2"
@@ -21,7 +21,6 @@ object ScalaOAuth2Build extends Build {
     crossScalaVersions := _crossScalaVersions,
     scalacOptions ++= _scalacOptions,
     publishTo <<= version { (v: String) => _publishTo(v) },
-    credentials := _credentials,
     publishArtifact in Test := false,
     pomIncludeRepository := { x => false }
   )
@@ -43,7 +42,7 @@ object ScalaOAuth2Build extends Build {
       description := "OAuth 2.0 server-side implementation written in Scala",
       libraryDependencies ++= Seq(
         "commons-codec" % "commons-codec" % "1.8",
-        "com.nimbusds" % "oauth2-oidc-sdk" % "3.3",
+        "com.nimbusds" % "oauth2-oidc-sdk" % "3.4.1",
         "joda-time" % "joda-time" % "2.3",
         "org.joda" % "joda-convert" % "1.3.1",
         "javax.servlet" % "javax.servlet-api" % "3.0.1"
@@ -69,8 +68,6 @@ object ScalaOAuth2Build extends Build {
     if (v.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus + "snapshots")
     else Some("releases" at nexus + "releases")
   }
-
-  val _credentials = Seq(Credentials("Sonatype Nexus Repository Manager", "is-macmini1.cdlocal", "admin", "admin123"))
 
   val _scalacOptions = Seq("-deprecation", "-unchecked", "-feature")
 }
