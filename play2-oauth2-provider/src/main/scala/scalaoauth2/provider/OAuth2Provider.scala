@@ -16,7 +16,7 @@ trait OAuth2BaseProvider extends Results {
 
   val protectedResource = ProtectedResource
 
-  val tokenEndpoint = TokenEndpoint
+  val tokenEndpoint: TokenEndpoint = TokenEndpoint
 
   implicit def play2oauthRequest(request: RequestHeader): AuthorizationRequest = {
     AuthorizationRequest(request.headers.toMap, request.queryString)

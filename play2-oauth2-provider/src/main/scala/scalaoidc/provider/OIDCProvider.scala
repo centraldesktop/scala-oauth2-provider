@@ -29,7 +29,7 @@ import scalaoidc.token.OIDCIDToken
  */
 trait OIDCProvider extends OAuth2Provider {
 
-  override val tokenEndpoint = OIDCTokenEndpoint
+  override val tokenEndpoint: TokenEndpoint = OIDCTokenEndpoint
 
   def parseRequest(request: RequestHeader): AuthenticationRequest = {
     AuthenticationRequest.parse(request.rawQueryString)
