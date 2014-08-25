@@ -66,10 +66,6 @@ trait OAuth2BaseProvider extends Results {
       (if (!e.description.isEmpty) { Seq("error_description=\"" + e.description + "\"") } else { Nil })
     params.mkString(", ")
   }
-
-  def tokenEndpoint: TokenEndpoint = {
-    TokenEndpoint
-  }
 }
 
 /**

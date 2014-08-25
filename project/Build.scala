@@ -18,6 +18,7 @@ object ScalaOAuth2Build extends Build {
     organization := _organization,
     version := _version,
     scalaVersion := _scalaVersion,
+    credentials := Seq(Credentials(Path.userHome / ".ivy2" / "credentials")),
     crossScalaVersions := _crossScalaVersions,
     scalacOptions ++= _scalacOptions,
     publishTo <<= version { (v: String) => _publishTo(v) },
