@@ -44,6 +44,13 @@ trait OIDCDataHandler[U] extends DataHandler[U] {
   def getStoredAuthCode(authInfo: AuthInfo[U]): Option[AuthCode]
 
   /**
+   * Deletes stored auth code for authorized information.
+   *
+   * @param authInfo This value is already authorized by system.
+   */
+  def deleteStoredAuthCodes(authInfo: AuthInfo[U])
+
+  /**
    * A locally unique and never reassigned identifier within the Issuer for the End-User, which is intended to be consumed by the Client, e.g.,
    * 24400320 or AItOawmwtWwcT0k51BayewNvutrJUqsvl6qs7A4. It MUST NOT exceed 255 ASCII characters in length. The sub value is a case sensitive string.
    *
@@ -72,8 +79,8 @@ trait OIDCDataHandler[U] extends DataHandler[U] {
       new Issuer(getIssuerIdentifier),
       new Subject(getSubjectIdentifier(authInfo)),
       new Audience(authInfo.clientId).toSingleAudienceList,
-      now.toDate,
-      now.plus(expiresIn).toDate
+      now.plus(expiresIn).toDate,
+      now.toDate
     )
     accessToken match {
       case Some(token) => idTokenClaimsSet.setAccessTokenHash(AccessTokenHash.compute(new BearerAccessToken(token), JWSAlgorithm.RS256))

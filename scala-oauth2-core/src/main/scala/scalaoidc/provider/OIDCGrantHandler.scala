@@ -1,8 +1,11 @@
 package scalaoidc.provider
 
+import scala.concurrent.Future
 import scalaoauth2.provider._
 import com.nimbusds.openid.connect.sdk.{AuthenticationSuccessResponse, AuthenticationRequest}
 import com.nimbusds.oauth2.sdk.AuthorizationCode
+import scala.concurrent.ExecutionContext.Implicits._
+
 
 case class OIDCGrantHandlerResult(tokenType: String, accessToken: String, expiresIn: Option[Long], refreshToken: Option[String], scope: Option[String], idToken: String) extends GrantHandlerResult
 
@@ -41,20 +44,23 @@ class OIDCImplicitFlow extends OIDCGrantHandler {
 
 class OIDCTokenRequest(clientCredentialFetcher: ClientCredentialFetcher) extends GrantHandler {
 
-  override def handleRequest[U](request: AuthorizationRequest, dataHandler: DataHandler[U]): GrantHandlerResult = {
+  override def handleRequest[U](request: AuthorizationRequest, dataHandler: DataHandler[U]): Future[GrantHandlerResult] = {
     val clientCredential = clientCredentialFetcher.fetch(request).getOrElse(throw new InvalidRequest("BadRequest"))
     val clientId = clientCredential.clientId
     val redirectUri = request.redirectUri
-    val authInfo = dataHandler.findAuthInfoByCode(request.requireCode).getOrElse(throw new InvalidGrant())
-    if (authInfo.clientId != clientId) {
-      throw new InvalidClient
-    }
 
-    if (authInfo.redirectUri != redirectUri) {
-      throw new RedirectUriMismatch
-    }
+    dataHandler.findAuthInfoByCode(request.requireCode) flatMap { maybeAuthInfo =>
+      val authInfo = maybeAuthInfo.getOrElse(throw new InvalidGrant())
+      if (authInfo.clientId != clientId) {
+        throw new InvalidClient
+      }
 
-    issueAccessTokenWithIDToken(dataHandler, authInfo)
+      if (authInfo.redirectUri != redirectUri) {
+        throw new RedirectUriMismatch
+      }
+
+      issueAccessTokenWithIDToken(dataHandler, authInfo)
+    }
   }
 
   /**
@@ -64,21 +70,22 @@ class OIDCTokenRequest(clientCredentialFetcher: ClientCredentialFetcher) extends
    * @param authInfo
    * @return
    */
-  def issueAccessTokenWithIDToken[U, H >: OIDCDataHandler[U] <: DataHandler[U]](dataHandler: H, authInfo: AuthInfo[U]): GrantHandlerResult = {
-    val result = issueAccessToken(dataHandler, authInfo)
-    dataHandler match {
-      case handler: OIDCDataHandler[U] => {
-        val idToken = handler.createIDToken(authInfo, Some(result.accessToken))
-        OIDCGrantHandlerResult(
-          result.tokenType,
-          result.accessToken,
-          result.expiresIn,
-          result.refreshToken,
-          None,
-          idToken.serialize
-        )
+  def issueAccessTokenWithIDToken[U, H >: OIDCDataHandler[U] <: DataHandler[U]](dataHandler: H, authInfo: AuthInfo[U]): Future[GrantHandlerResult] = {
+    issueAccessToken(dataHandler, authInfo) map { result =>
+      dataHandler match {
+        case handler: OIDCDataHandler[U] =>
+          handler.deleteStoredAuthCodes(authInfo)
+          val idToken = handler.createIDToken(authInfo, Some(result.accessToken))
+          OIDCGrantHandlerResult(
+            result.tokenType,
+            result.accessToken,
+            result.expiresIn,
+            result.refreshToken,
+            None,
+            idToken.serialize
+          )
+        case _ => result
       }
-      case _ => result
     }
   }
 

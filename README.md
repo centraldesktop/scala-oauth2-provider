@@ -1,4 +1,4 @@
-# oauth2-server for Scala
+# oauth2-server for Scala [![Build Status](https://travis-ci.org/nulab/scala-oauth2-provider.svg?branch=master)](https://travis-ci.org/nulab/scala-oauth2-provider)
 
 [The OAuth 2.0](http://tools.ietf.org/html/rfc6749) server-side implementation written in Scala.
 
@@ -20,17 +20,29 @@ and an access token type called [Bearer](http://tools.ietf.org/html/rfc6750).
 
 If you'd like to use this with Playframework, add "play2-oauth2-provider" to library dependencies of your project.
 
+### For Playframework 2.3
+
 ```scala
 libraryDependencies ++= Seq(
-  "com.nulab-inc" %% "play2-oauth2-provider" % "0.7.2"
+  "com.nulab-inc" %% "play2-oauth2-provider" % "0.8.0"
 )
 ```
 
-Otherwise, add "scala-oauth2-core" instead. In this case, you need to implement your own OAuth provider working with web framework you use.
+### For Playframework 2.2
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.nulab-inc" %% "scala-oauth2-core" % "0.7.2"
+  "com.nulab-inc" %% "play2-oauth2-provider" % "0.7.3"
+)
+```
+
+### Other frameworks
+
+Add "scala-oauth2-core" instead. In this case, you need to implement your own OAuth provider working with web framework you use.
+
+```scala
+libraryDependencies ++= Seq(
+  "com.nulab-inc" %% "scala-oauth2-core" % "0.8.0"
 )
 ```
 
@@ -45,28 +57,30 @@ case class User(id: Long, name: String, hashedPassword: String)
 
 class MyDataHandler extends DataHandler[User] {
 
-  def validateClient(clientId: String, clientSecret: String, grantType: String): Boolean = ???
+  def validateClient(clientId: String, clientSecret: String, grantType: String): Future[Boolean] = ???
 
-  def findUser(username: String, password: String): Option[User] = ???
+  def findUser(username: String, password: String): Future[Option[User]] = ???
 
-  def createAccessToken(authInfo: AuthInfo[User]): AccessToken = ???
+  def createAccessToken(authInfo: AuthInfo[User]): Future[AccessToken] = ???
 
-  def getStoredAccessToken(authInfo: AuthInfo[User]): Option[AccessToken] = ???
+  def getStoredAccessToken(authInfo: AuthInfo[User]): Future[Option[AccessToken]] = ???
 
-  def refreshAccessToken(authInfo: AuthInfo[User], refreshToken: String): AccessToken = ???
+  def refreshAccessToken(authInfo: AuthInfo[User], refreshToken: String): Future[AccessToken] = ???
 
-  def findAuthInfoByCode(code: String): Option[AuthInfo[User]] = ???
+  def findAuthInfoByCode(code: String): Future[Option[AuthInfo[User]]] = ???
 
-  def findAuthInfoByRefreshToken(refreshToken: String): Option[AuthInfo[User]] = ???
+  def findAuthInfoByRefreshToken(refreshToken: String): Future[Option[AuthInfo[User]]] = ???
 
-  def findClientUser(clientId: String, clientSecret: String, scope: Option[String]): Option[User] = ???
+  def findClientUser(clientId: String, clientSecret: String, scope: Option[String]): Future[Option[User]] = ???
 
-  def findAccessToken(token: String): Option[AccessToken] = ???
+  def findAccessToken(token: String): Future[Option[AccessToken]] = ???
 
-  def findAuthInfoByAccessToken(accessToken: AccessToken): Option[AuthInfo[User]] = ???
+  def findAuthInfoByAccessToken(accessToken: AccessToken): Future[Option[AuthInfo[User]]] = ???
 
 }
 ```
+
+If your data access is blocking for the data storage, then you just wrap your implementation in the ```DataHandler``` trait with ```Future.successful(...)```.
 
 For more details, refer to Scaladoc of ```DataHandler```.
 
@@ -79,7 +93,7 @@ You should follow three steps below to work with Playframework.
 * Access to an authorized resource
 
 First, define your own controller with mixining ```OAuth2Provider``` trait provided by this library to issue access token.
-Asynchronous result is used in your controller then you can use ```OAuth2AsyncProvider```, which supports returning ```Future[SimpleResult]```.
+Asynchronous result is used in your controller then you can use ```OAuth2AsyncProvider```, which supports returning ```Future[Result]```.
 
 ```scala
 import scalaoauth2.provider._

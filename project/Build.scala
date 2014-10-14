@@ -4,14 +4,11 @@ import Keys._
 object ScalaOAuth2Build extends Build {
 
   lazy val _organization = "kairos"
-  lazy val _version =  "0.8.0-SNAPSHOT"
-  def _playVersion(version: String) = version match {
-    case "2.11.1" => "2.3.0"
-    case _ => "2.2.3"
-  }
+  lazy val _version =  "0.9.0-SNAPSHOT"
+  lazy val _playVersion = "2.3.3"
 
-  val _crossScalaVersions = Seq("2.10.3", "2.11.1")
-  val _scalaVersion = "2.11.1"
+  val _crossScalaVersions = Seq("2.10.3", "2.11.2")
+  val _scalaVersion = "2.11.2"
 
   val commonDependenciesInTestScope = Seq(
     "org.scalatest" %% "scalatest" % "2.2.0" % "test"
@@ -21,10 +18,10 @@ object ScalaOAuth2Build extends Build {
     organization := _organization,
     version := _version,
     scalaVersion := _scalaVersion,
+    credentials := Seq(Credentials(Path.userHome / ".ivy2" / "credentials")),
     crossScalaVersions := _crossScalaVersions,
     scalacOptions ++= _scalacOptions,
     publishTo <<= version { (v: String) => _publishTo(v) },
-    publishMavenStyle := true,
     publishArtifact in Test := false,
     pomIncludeRepository := { x => false }
   )
@@ -46,7 +43,7 @@ object ScalaOAuth2Build extends Build {
       description := "OAuth 2.0 server-side implementation written in Scala",
       libraryDependencies ++= Seq(
         "commons-codec" % "commons-codec" % "1.8",
-        "com.nimbusds" % "oauth2-oidc-sdk" % "3.3",
+        "com.nimbusds" % "oauth2-oidc-sdk" % "3.4.1",
         "joda-time" % "joda-time" % "2.3",
         "org.joda" % "joda-convert" % "1.3.1",
         "javax.servlet" % "javax.servlet-api" % "3.0.1"
@@ -62,7 +59,7 @@ object ScalaOAuth2Build extends Build {
       description := "Support scala-oauth2-core library on Playframework Scala",
       resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/maven-releases/",
       libraryDependencies ++= Seq(
-        "com.typesafe.play" %% "play" % _playVersion(scalaVersion.value) % "provided"
+        "com.typesafe.play" %% "play" % _playVersion % "provided"
       ) ++ commonDependenciesInTestScope
     )
   ) dependsOn(scalaOAuth2Core)
