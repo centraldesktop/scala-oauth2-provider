@@ -3,7 +3,16 @@ package scalaoauth2.provider
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-case class GrantHandlerResult(tokenType: String, accessToken: String, expiresIn: Option[Long], refreshToken: Option[String], scope: Option[String])
+import scalaoauth2.provider.{AuthInfo, DataHandler}
+abstract class GrantHandlerResult {
+  def tokenType: String
+  def accessToken: String
+  def expiresIn: Option[Long]
+  def refreshToken: Option[String]
+  def scope: Option[String]
+}
+
+case class OAuth2GrantHandlerResult(tokenType: String, accessToken: String, expiresIn: Option[Long], refreshToken: Option[String], scope: Option[String]) extends GrantHandlerResult
 
 trait GrantHandler {
   /**
@@ -13,7 +22,9 @@ trait GrantHandler {
    */
   def clientCredentialRequired = true
 
-  def handleRequest[U](request: AuthorizationRequest, maybeClientCredential: Option[ClientCredential], authorizationHandler: AuthorizationHandler[U]): Future[GrantHandlerResult]
+
+  def handleRequest[U](request: AuthorizationRequest, maybeClientCredential: Option[ClientCredential], authorizationHandler:AuthorizationHandler[U]): Future[GrantHandlerResult]
+
 
   /**
    * Returns valid access token.
@@ -29,7 +40,7 @@ trait GrantHandler {
         case Some(token) => Future.successful(token)
         case None => handler.createAccessToken(authInfo)
       }).map { accessToken =>
-        GrantHandlerResult(
+        OAuth2GrantHandlerResult(
           "Bearer",
           accessToken.token,
           accessToken.expiresIn,
@@ -55,7 +66,7 @@ class RefreshToken extends GrantHandler {
       }
 
       handler.refreshAccessToken(authInfo, refreshToken).map { accessToken =>
-        GrantHandlerResult(
+        OAuth2GrantHandlerResult(
           "Bearer",
           accessToken.token,
           accessToken.expiresIn,

@@ -13,6 +13,8 @@ trait OIDCGrantHandler {
   def handleRequest[U](request: AuthenticationRequest, dataHandler: OIDCDataHandler[U], user: U): AuthenticationSuccessResponse
 }
 
+
+
 class OIDCAuthCodeFlow extends OIDCGrantHandler {
 
   override def handleRequest[U](request: AuthenticationRequest, dataHandler: OIDCDataHandler[U], user: U): AuthenticationSuccessResponse = {
@@ -20,7 +22,7 @@ class OIDCAuthCodeFlow extends OIDCGrantHandler {
     val clientId = request.getClientID
     val scope = request.getScope
     val redirectUri = request.getRedirectionURI
-    val authInfo = AuthInfo(user, clientId.getValue, Some(scope.toString), Some(redirectUri.toString))
+    val authInfo = AuthInfo(user, Some(clientId.getValue), Some(scope.toString), Some(redirectUri.toString))
     val authCode = dataHandler.getStoredAuthCode(authInfo) match {
       case Some(code) => code
       case None => dataHandler.createAuthCode(authInfo)
@@ -36,7 +38,7 @@ class OIDCImplicitFlow extends OIDCGrantHandler {
     val clientId = request.getClientID
     val scope = request.getScope
     val redirectUri = request.getRedirectionURI
-    val authInfo = AuthInfo(user, clientId.getValue, Some(scope.toString), Some(redirectUri.toString))
+    val authInfo = AuthInfo(user, Some(clientId.getValue), Some(scope.toString), Some(redirectUri.toString))
 
     new AuthenticationSuccessResponse(request.getRedirectionURI, null, dataHandler.createIDToken(authInfo, None), null, request.getState)
   }
@@ -44,12 +46,12 @@ class OIDCImplicitFlow extends OIDCGrantHandler {
 
 class OIDCTokenRequest(clientCredentialFetcher: ClientCredentialFetcher) extends GrantHandler {
 
-  override def handleRequest[U](request: AuthorizationRequest, dataHandler: DataHandler[U]): Future[GrantHandlerResult] = {
+  override def handleRequest[U](request: AuthorizationRequest, maybeClientCredential: Option[ClientCredential], handler : AuthorizationHandler[U]): Future[GrantHandlerResult] = {
     val clientCredential = clientCredentialFetcher.fetch(request).getOrElse(throw new InvalidRequest("BadRequest"))
     val clientId = clientCredential.clientId
     val redirectUri = request.redirectUri
 
-    dataHandler.findAuthInfoByCode(request.requireCode) flatMap { maybeAuthInfo =>
+    handler.findAuthInfoByCode(request.requireCode) flatMap { maybeAuthInfo =>
       val authInfo = maybeAuthInfo.getOrElse(throw new InvalidGrant())
       if (authInfo.clientId != clientId) {
         throw new InvalidClient
@@ -59,7 +61,7 @@ class OIDCTokenRequest(clientCredentialFetcher: ClientCredentialFetcher) extends
         throw new RedirectUriMismatch
       }
 
-      issueAccessTokenWithIDToken(dataHandler, authInfo)
+      issueAccessTokenWithIDToken(handler, authInfo)
     }
   }
 
@@ -70,7 +72,7 @@ class OIDCTokenRequest(clientCredentialFetcher: ClientCredentialFetcher) extends
    * @param authInfo
    * @return
    */
-  def issueAccessTokenWithIDToken[U, H >: OIDCDataHandler[U] <: DataHandler[U]](dataHandler: H, authInfo: AuthInfo[U]): Future[GrantHandlerResult] = {
+  def issueAccessTokenWithIDToken[U, H >: OIDCDataHandler[U] <: AuthorizationHandler[U]](dataHandler: H, authInfo: AuthInfo[U]): Future[GrantHandlerResult] = {
     issueAccessToken(dataHandler, authInfo) map { result =>
       dataHandler match {
         case handler: OIDCDataHandler[U] =>

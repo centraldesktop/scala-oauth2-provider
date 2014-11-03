@@ -25,6 +25,7 @@ case class AccessToken(token: String, refreshToken: Option[String], scope: Optio
 
 }
 
+
 /**
  * Authorized information
  *

@@ -78,7 +78,7 @@ trait OIDCDataHandler[U] extends DataHandler[U] {
     val idTokenClaimsSet = new IDTokenClaimsSet(
       new Issuer(getIssuerIdentifier),
       new Subject(getSubjectIdentifier(authInfo)),
-      new Audience(authInfo.clientId).toSingleAudienceList,
+      new Audience(authInfo.clientId.get).toSingleAudienceList,
       now.plus(expiresIn).toDate,
       now.toDate
     )

@@ -8,7 +8,8 @@ import scalaoauth2.provider.OAuthGrantType._
 trait TokenEndpoint {
   val fetcher = ClientCredentialFetcher
 
-  val handlers = Map(
+
+  def handlers = Map(
     AUTHORIZATION_CODE  -> new AuthorizationCode(),
     REFRESH_TOKEN       -> new RefreshToken(),
     CLIENT_CREDENTIALS  -> new ClientCredentials(),

@@ -2,6 +2,7 @@ package scalaoauth2.provider
 
 import scala.concurrent.Future
 
+
 /**
  * Provide <b>Authorization</b> phases support for using OAuth 2.0.
  *
