@@ -53,7 +53,8 @@ class OIDCTokenRequest(clientCredentialFetcher: ClientCredentialFetcher) extends
 
     handler.findAuthInfoByCode(request.requireCode) flatMap { maybeAuthInfo =>
       val authInfo = maybeAuthInfo.getOrElse(throw new InvalidGrant())
-      if (authInfo.clientId != clientId) {
+
+      if (authInfo.clientId != Some(clientId)) {
         throw new InvalidClient
       }
 
