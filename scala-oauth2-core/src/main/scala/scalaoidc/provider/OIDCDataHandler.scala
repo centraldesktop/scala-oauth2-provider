@@ -21,7 +21,13 @@ import com.nimbusds.oauth2.sdk.token.BearerAccessToken
  * @param scope Inform the client of the scope of the auth code issued.
  * @param expiresIn Expiration date of auth code. Unit is seconds.
  */
-case class AuthCode(authorizationCode: String, userId: String, redirectUri: Option[String], createdAt: Date, scope: Option[String], clientId: String, expiresIn: Option[Long])
+case class AuthCode(authorizationCode: String, userId: String, redirectUri: Option[String], createdAt: Date, scope: Option[String], clientId: String, expiresIn: Option[Long]) {
+  def isExpired: Boolean = expiresIn.exists { expiresIn =>
+    val now = System.currentTimeMillis()
+    createdAt.getTime + expiresIn * 1000 <= now
+  }
+
+}
 
 trait OIDCDataHandler[U] extends DataHandler[U] {
 
