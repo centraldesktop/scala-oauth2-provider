@@ -4,11 +4,11 @@ import Keys._
 object ScalaOAuth2Build extends Build {
 
   lazy val _organization = "kairos"
-  lazy val _version =  "0.11.0"
+  lazy val _version =  "0.11.1"
   lazy val _playVersion = "2.3.3"
 
   val _crossScalaVersions = Seq("2.10.3", "2.11.2")
-  val _scalaVersion = "2.11.2"
+  val _scalaVersion = "2.10.4"
 
   val commonDependenciesInTestScope = Seq(
     "org.scalatest" %% "scalatest" % "2.2.0" % "test"
@@ -63,6 +63,7 @@ object ScalaOAuth2Build extends Build {
       ) ++ commonDependenciesInTestScope
     )
   ) dependsOn(scalaOAuth2Core)
+
 
   def _publishTo(v: String) = {
     val nexus = "http://is-macmini1.cdlocal:8081/nexus/content/repositories/"
