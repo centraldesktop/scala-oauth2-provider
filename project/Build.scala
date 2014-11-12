@@ -16,7 +16,7 @@ object ScalaOAuth2Build extends Build {
     "org.scalatest" %% "scalatest" % "2.2.0" % "test"
    
   )
-  addSbtPlugin("ohnosequences" % "sbt-s3-resolver" % "0.8.0")
+
   lazy val scalaOAuth2ProviderSettings = Defaults.defaultSettings ++ S3Resolver.defaults ++ Seq(
     organization := _organization,
     version := _version,
