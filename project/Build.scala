@@ -1,27 +1,35 @@
 import sbt._
 import Keys._
+import ohnosequences.sbt.SbtS3Resolver._  
+import com.amazonaws.services.s3.model.Region  
 
 object ScalaOAuth2Build extends Build {
 
   lazy val _organization = "kairos"
-  lazy val _version =  "0.9.0-SNAPSHOT"
+  lazy val _version =  "0.11.1"
   lazy val _playVersion = "2.3.3"
 
   val _crossScalaVersions = Seq("2.10.3", "2.11.2")
-  val _scalaVersion = "2.11.2"
+  val _scalaVersion = "2.10.4"
 
   val commonDependenciesInTestScope = Seq(
     "org.scalatest" %% "scalatest" % "2.2.0" % "test"
+   
   )
 
-  lazy val scalaOAuth2ProviderSettings = Defaults.defaultSettings ++ Seq(
+  lazy val scalaOAuth2ProviderSettings = Defaults.defaultSettings ++ S3Resolver.defaults ++ Seq(
     organization := _organization,
     version := _version,
     scalaVersion := _scalaVersion,
-    credentials := Seq(Credentials(Path.userHome / ".ivy2" / "credentials")),
     crossScalaVersions := _crossScalaVersions,
     scalacOptions ++= _scalacOptions,
-    publishTo <<= version { (v: String) => _publishTo(v) },
+    publishMavenStyle := false,
+    s3region := Region.US_Standard,
+    publishTo := {  
+      val prefix = if (isSnapshot.value) "snapshots" else "releases"
+
+      Some(s3resolver.value(s"$prefix s3 bucket", s3("jaroop-" + prefix)) withIvyPatterns)
+    },
     publishArtifact in Test := false,
     pomIncludeRepository := { x => false }
   )
@@ -38,9 +46,11 @@ object ScalaOAuth2Build extends Build {
   lazy val scalaOAuth2Core = Project(
     id = "scala-oauth2-core",
     base = file("scala-oauth2-core"),
+
     settings = scalaOAuth2ProviderSettings ++ Seq(
       name := "scala-oauth2-core",
       description := "OAuth 2.0 server-side implementation written in Scala",
+  
       libraryDependencies ++= Seq(
         "commons-codec" % "commons-codec" % "1.8",
         "com.nimbusds" % "oauth2-oidc-sdk" % "3.4.1",
@@ -58,18 +68,13 @@ object ScalaOAuth2Build extends Build {
       name := "play2-oauth2-provider",
       description := "Support scala-oauth2-core library on Playframework Scala",
       resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/maven-releases/",
+      resolvers += "Era7 maven releases" at "http://releases.era7.com.s3.amazonaws.com",
       libraryDependencies ++= Seq(
         "com.typesafe.play" %% "play" % _playVersion % "provided"
       ) ++ commonDependenciesInTestScope
     )
   ) dependsOn(scalaOAuth2Core)
 
-  def _publishTo(v: String) = {
-    val nexus = "http://is-macmini1.cdlocal:8081/nexus/content/repositories/"
-    if (v.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus + "snapshots")
-    else Some("releases" at nexus + "releases")
-  }
 
   val _scalacOptions = Seq("-deprecation", "-unchecked", "-feature")
 }
-

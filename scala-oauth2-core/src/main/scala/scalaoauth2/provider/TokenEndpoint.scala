@@ -3,30 +3,41 @@ package scalaoauth2.provider
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait TokenEndpoint {
+import scalaoauth2.provider.OAuthGrantType._
 
+trait TokenEndpoint {
   val fetcher = ClientCredentialFetcher
 
+
   def handlers = Map(
-    "authorization_code" -> new AuthorizationCode(fetcher),
-    "refresh_token" -> new RefreshToken(fetcher),
-    "client_credentials" -> new ClientCredentials(fetcher),
-    "password" -> new Password(fetcher)
+    AUTHORIZATION_CODE  -> new AuthorizationCode(),
+    REFRESH_TOKEN       -> new RefreshToken(),
+    CLIENT_CREDENTIALS  -> new ClientCredentials(),
+    PASSWORD            -> new Password()
   )
 
-  def handleRequest[U](request: AuthorizationRequest, dataHandler: DataHandler[U]): Future[Either[OAuthError, GrantHandlerResult]] = try {
+  def handleRequest[U](request: AuthorizationRequest, handler: AuthorizationHandler[U]): Future[Either[OAuthError, GrantHandlerResult]] = try {
     val grantType = request.grantType.getOrElse(throw new InvalidRequest("grant_type is not found"))
-    val handler = handlers.get(grantType).getOrElse(throw new UnsupportedGrantType("The grant_type is not supported"))
-    val clientCredential = fetcher.fetch(request).getOrElse(throw new InvalidRequest("Client credential is not found"))
+    val grantHandler = handlers.getOrElse(grantType, throw new UnsupportedGrantType("The grant_type is not supported"))
 
-    dataHandler.validateClient(clientCredential.clientId, clientCredential.clientSecret, grantType).flatMap { validClient =>
-      if (!validClient) {
-        Future.successful(Left(throw new InvalidClient()))
-      } else {
-        handler.handleRequest(request, dataHandler).map(Right(_))
+    fetcher.fetch(request).map { clientCredential =>
+      handler.validateClient(clientCredential, grantType).flatMap { validClient =>
+        if (!validClient) {
+          Future.successful(Left(throw new InvalidClient()))
+        } else {
+          grantHandler.handleRequest(request, Some(clientCredential), handler).map(Right(_))
+        }
+      }.recover {
+        case e: OAuthError => Left(e)
       }
-    }.recover {
-      case e: OAuthError => Left(e)
+    }.getOrElse {
+      if (grantHandler.clientCredentialRequired) {
+        throw new InvalidRequest("Client credential is not found")
+      } else {
+        grantHandler.handleRequest(request, None, handler).map(Right(_)).recover {
+          case e: OAuthError => Left(e)
+        }
+      }
     }
   } catch {
     case e: OAuthError => Future.successful(Left(e))

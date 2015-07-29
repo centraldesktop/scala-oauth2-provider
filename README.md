@@ -24,7 +24,7 @@ If you'd like to use this with Playframework, add "play2-oauth2-provider" to lib
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.nulab-inc" %% "play2-oauth2-provider" % "0.8.0"
+  "com.nulab-inc" %% "play2-oauth2-provider" % "0.11.0"
 )
 ```
 
@@ -32,7 +32,7 @@ libraryDependencies ++= Seq(
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.nulab-inc" %% "play2-oauth2-provider" % "0.7.3"
+  "com.nulab-inc" %% "play2-oauth2-provider" % "0.7.4"
 )
 ```
 
@@ -42,7 +42,7 @@ Add "scala-oauth2-core" instead. In this case, you need to implement your own OA
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.nulab-inc" %% "scala-oauth2-core" % "0.8.0"
+  "com.nulab-inc" %% "scala-oauth2-core" % "0.11.0"
 )
 ```
 
@@ -57,7 +57,7 @@ case class User(id: Long, name: String, hashedPassword: String)
 
 class MyDataHandler extends DataHandler[User] {
 
-  def validateClient(clientId: String, clientSecret: String, grantType: String): Future[Boolean] = ???
+  def validateClient(clientCredential: ClientCredential, grantType: String): Future[Boolean] = ???
 
   def findUser(username: String, password: String): Future[Option[User]] = ???
 
@@ -71,7 +71,7 @@ class MyDataHandler extends DataHandler[User] {
 
   def findAuthInfoByRefreshToken(refreshToken: String): Future[Option[AuthInfo[User]]] = ???
 
-  def findClientUser(clientId: String, clientSecret: String, scope: Option[String]): Future[Option[User]] = ???
+  def findClientUser(clientCredential: ClientCredential, scope: Option[String]): Future[Option[User]] = ???
 
   def findAccessToken(token: String): Future[Option[AccessToken]] = ???
 
@@ -83,6 +83,26 @@ class MyDataHandler extends DataHandler[User] {
 If your data access is blocking for the data storage, then you just wrap your implementation in the ```DataHandler``` trait with ```Future.successful(...)```.
 
 For more details, refer to Scaladoc of ```DataHandler```.
+
+### AuthInfo
+
+```DataHandler``` returns ```AuthInfo``` as authorized information.
+```AuthInfo``` is made up of the following fields.
+
+```
+case class AuthInfo[User](user: User, clientId: Option[String], scope: Option[String], redirectUri: Option[String])
+```
+
+- user
+  - ```user``` is authorized by DataHandler
+- clientId
+  - ```clientId``` which is sent from a client has been verified by ```DataHandler```
+  - If your application requires client_id for client authentication, you can get ```clientId``` as below
+    - ```val clientId = authInfo.clientId.getOrElse(throw new InvalidClient())```
+- scope
+  - inform the client of the scope of the access token issued
+- redirectUri
+  - This value must be enabled on authorization code grant
 
 ### Work with Playframework
 
@@ -125,6 +145,25 @@ object MyController extends Controller with OAuth2Provider {
 ```
 
 If you'd like to change the OAuth workflow, modify handleRequest methods of TokenEndPoint and ```ProtectedResource``` traits.
+
+### Customizing Grant Handlers
+
+If you want to change which grant types are supported or to use a customized handler for a grant type, you can
+override the ```handlers``` map in a customized ```TokenEndpoint``` trait since version 0.10.0.  Here's an example of a customized
+```TokenEndpoint``` that 1) only supports the ```password``` grant type, and 2) customizes the ``password``` grant
+type handler to not require client credentials:
+
+```scala
+class MyTokenEndpoint extends TokenEndpoint {
+  val passwordNoCred = new Password() {
+    override def clientCredentialRequired = false
+  }
+
+  override val handlers = Map(
+    "password" -> passwordNoCred
+  )
+}
+```
 
 ## Examples
 
